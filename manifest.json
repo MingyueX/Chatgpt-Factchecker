@@ -1,0 +1,24 @@
+{
+    "name": "ChatGPT Fact-Checker",
+    "version": "1.0",
+    "description": "A chrome extension to help users fact-check information they receive through ChatGPT.",
+    "manifest_version": 3,
+    "action": {},
+    "permissions": [
+        "activeTab",
+        "scripting"
+    ],
+    "content_scripts": [
+        {
+            "matches": [
+                "https://chat.openai.com/*"
+            ],
+            "js": [
+                "content.js"
+            ]
+        }
+    ],
+    "host_permissions": [
+        "https://api.claimbuster.ai/*"
+    ]
+}
