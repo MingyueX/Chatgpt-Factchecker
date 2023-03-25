@@ -6,7 +6,8 @@ const panelHTML = `
   <div 
     class="the-score-comes-from-claim-bust"
   >The score comes from ClaimBuster, ranges from 0 to 1, the higher the score, the more check-worthy the sentence.</div>
-  <div class="div-3">Filter (implement later)</div>
+  <div class="div-3">FilterLevel <span id="sliderValue"></span></div>
+  <div class="slidecontainer"><input type="range" min="0" max="1" value="0.5" step="0.05" class="slider" id="sliderRange"></div>
   <div class="div-4">Results</div>
   <div class="div-5" id="sentence-list">
   </div>
@@ -93,6 +94,39 @@ const panelHTML = `
     align-self: stretch;
     background-color: rgba(255, 255, 255, 0.20000000298023224);
   }
+  .slidecontainer {
+    width: 100%;
+  }
+  .slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 5px;
+      background: #d3d3d3;
+      outline: none;
+      opacity: 0.8;
+      -webkit-transition: .2s;
+      transition: opacity .2s;
+  }
+  .slider:hover {
+      opacity: 1;
+  }
+  .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #74AA9C;
+      cursor: pointer;
+  }
+  .slider::-moz-range-thumb {
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: #74AA9C;
+      cursor: pointer;
+  }
 </style>
 `;
 
@@ -147,7 +181,7 @@ function showHidePanel() {
 }
 
 async function createFactCheckPanel() {
-    let scoredSentences = [];
+    let scoredSentences = new Map();
     let paragraphs = talkBlockToFactCheck.getElementsByTagName('p');
 
     for (let i = 0; i < paragraphs.length; i++) {
@@ -156,7 +190,7 @@ async function createFactCheckPanel() {
         let results = await Promise.all(sentences.map((sentence) => fetchClaimBusterScore(sentence)));
 
         results.forEach((result, index) => {
-            scoredSentences.push(generateSentence(sentences[index], result.score));
+            scoredSentences.set(result.score, generateSentence(sentences[index], result.score));
         });
     }
 
@@ -187,22 +221,39 @@ async function createFactCheckPanel() {
     align-items: flex-center;
     border-radius: 5px;
     border: 1px solid #d1d5db;
-    padding-top: 10px;
+    padding-top: 7px;
     padding-right: 10px;
-    padding-bottom: 10px;
+    padding-bottom: 7px;
     padding-left: 10px;
     margin: 0 auto;
     margin-top: 8px;
+    text-weight: bold;
     `;
     checkButton.addEventListener('click', () => { });
     panel.appendChild(checkButton);
 
     talkBlockToFactCheck.appendChild(panel);
 
+    let slider = document.getElementById('sliderRange');
+    let output = document.getElementById('sliderValue');
+    output.innerHTML = slider.value;
+
+    slider.oninput = function () {
+        output.innerHTML = this.value;
+        sentenceList.innerHTML = '';
+        scoredSentences.forEach((sentence, score) => {
+            if (score >= slider.value) {
+                sentenceList.appendChild(sentence);
+            }
+        });
+    }
+
     let sentenceList = document.getElementById('sentence-list');
 
-    scoredSentences.forEach((sentence) => {
-        sentenceList.appendChild(sentence);
+    scoredSentences.forEach((sentence, score) => {
+        if (score >= slider.value) {
+            sentenceList.appendChild(sentence);
+        }
     });
 }
 
@@ -259,6 +310,7 @@ function generateSentence(text, score) {
     flex-direction: column;
     display: flex;
     line-height: 1.3;
+    cursor: pointer;
     `;
 
     return scoredSentence;
