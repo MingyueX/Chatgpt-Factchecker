@@ -188,7 +188,7 @@ const obs = new MutationObserver(() => {
 
         if (talkBlockToFactCheck != talkBlocks[talkBlocks.length - 1]) {
             talkBlockToFactCheck = talkBlocks[talkBlocks.length - 1];
-            addShowHelperButton();
+            addShowHelperButton(panelCounter);
             createFactCheckPanel();
         }
 
@@ -202,15 +202,17 @@ function addGetScoreButton() {
     talkBlockToFactCheck.appendChild(GetScoreButton);
 }
 
-function addShowHelperButton() {
+function addShowHelperButton(id) {
     const FactCheckButton = generateButton('Display Fact-Check Helper');
     FactCheckButton.className = 'helper';
-    FactCheckButton.addEventListener('click', showHidePanel(panelCounter - 1));
+    FactCheckButton.setAttribute("index", id)
+    FactCheckButton.addEventListener('click', showHidePanel);
     talkBlockToFactCheck.appendChild(FactCheckButton);
 }
 
-function showHidePanel(counter) {
+function showHidePanel(evt) {
     // const panel = document.getElementById('fact-check-panel');
+    counter = evt.currentTarget.getAttribute("index");
     const panel = document.getElementsByClassName('check-panel')[counter];
     // const helperButton = document.getElementById('helper');
     const helperButton = document.getElementsByClassName('helper')[counter];
