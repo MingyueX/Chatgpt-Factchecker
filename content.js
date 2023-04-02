@@ -1,6 +1,8 @@
 const CLAIMBUSTER_API_URL = 'https://idir.uta.edu/claimbuster/api/v2/score/text/';
 const CLAIMBUSTER_API_KEY = '233df54ecb1842eb8f2845a722582f9f';
 
+const GOOGLE_API_KEY = 'AIzaSyAiIFM0IcRbxkC1uHfeB3tXmVbmZLdZdvk';
+
 const panelHTML = `
   <div class="div-2">ChatGPT Fact-Checker</div>
   <div 
@@ -8,17 +10,24 @@ const panelHTML = `
   >The score comes from ClaimBuster, ranges from 0 to 1, the higher the score, the more check-worthy the sentence.</div>
   <div class="div-3">FilterLevel <span id="sliderValue"></span></div>
   <div class="slidecontainer"><input type="range" min="0" max="1" value="0.5" step="0.05" class="slider" id="sliderRange"></div>
-  <div class="div-4">Results</div>
+  <div class="div-4">Scored-Sentences</div>
   <div class="div-5" id="sentence-list">
   </div>
   <div class="div-16">Fact-Check</div>
-  <input
-    type="text"
-    placeholder="Select sentence from Results or Enter custom input"
-    id="fact-check input"
-    class="form-input"
-    data-el="form-input"
-  ></input>
+  <select class="select" id="fact-check select" value="fact">
+    <option value="fact">sentence</option>
+    <option value="url">url</option>
+  </select>
+  <div class="input-container">
+    <input
+        type="text"
+        placeholder="Select sentence from Results or Enter custom input"
+        id="fact-check input"
+        class="form-input"
+        data-el="form-input"
+    ></input>
+    <button id="checkbutton" class="check-button">Check</button>
+  </div>
 <style>
   .div-2 {
     max-width: 100%;
@@ -69,7 +78,7 @@ const panelHTML = `
     align-self: stretch;
     align-items: center;
     overflow-y: auto;
-    height: 200px;
+    max-height: 160px;
   }
   .div-16 {
     max-width: 100%;
@@ -81,12 +90,43 @@ const panelHTML = `
     font-family: "Ubuntu Mono", sans-serif;
     font-weight: bold;
   }
+  .select {
+    margin-top: 8px;
+    padding-top: 2px;
+    padding-bottom: 2px;
+    padding-left: 5px;
+    padding-right: 5px;
+    border-radius: 4px;
+    background-color: rgba(255, 255, 255, 0.2);
+    width: 20%;
+  }
+  .input-container {
+    display: flex;
+    flex-direction: row;
+    margin-top: 8px;
+    max-width: 100%;
+    align-self: stretch;
+    justify-content: space-between;
+  }
+  .check-button {
+    justify-content: flex-center;
+    align-items: flex-center;
+    border-radius: 5px;
+    border: 1px solid #d1d5db;
+    padding-top: 5px;
+    padding-bottom: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
+    margin: 0 auto;
+    text-weight: bold;
+  }
+
   .form-input {
     display: flex;
-    flex-direction: column;
-    margin-top: 8px;
-    padding-top: 8px;
-    padding-bottom: 8px;
+    flex-grow: 1;
+    margin-right: 8px;
+    padding-top: 5px;
+    padding-bottom: 5px;
     padding-left: 5px;
     padding-right: 5px;
     border-radius: 4px;
@@ -129,6 +169,7 @@ const panelHTML = `
   }
 </style>
 `;
+
 
 const main = document.querySelector('body');
 let talkBlockToFactCheck;
@@ -212,29 +253,101 @@ async function createFactCheckPanel() {
     padding-bottom: 15px;
     padding-left: 15px;
     background-color: rgba(0, 14, 32, 1);
-    color: white;
     `;
-
-    const checkButton = document.createElement('button');
-    checkButton.textContent = 'Check';
-    checkButton.style.cssText = `
-    display: flex;
-    justify-content: flex-center;
-    align-items: flex-center;
-    border-radius: 5px;
-    border: 1px solid #d1d5db;
-    padding-top: 7px;
-    padding-right: 10px;
-    padding-bottom: 7px;
-    padding-left: 10px;
-    margin: 0 auto;
-    margin-top: 8px;
-    text-weight: bold;
-    `;
-    checkButton.addEventListener('click', () => { });
-    panel.appendChild(checkButton);
 
     talkBlockToFactCheck.appendChild(panel);
+
+    const checkButton = document.getElementById('checkbutton');
+    checkButton.addEventListener('click', async () => {
+        if (document.getElementById('result-list')) {
+            document.getElementById('result-list').remove();
+        }
+        const factInput = document.getElementById("fact-check input");
+        const input = factInput.value;
+
+        if (!input) {
+            alert('Please include a fact to check.');
+            return;
+        }
+
+        const selectedOption = document.getElementById('fact-check select').value;
+        if (selectedOption === 'fact') {
+            try {
+                const factCheckResult = await fetchGoogleFactCheck(input);
+                if (factCheckResult.claims) {
+                    let resultList = document.createElement('div');
+                    resultList.className = 'result-list';
+                    resultList.id = 'result-list';
+                    factCheckResult.claims.forEach((claim) => {
+                        let review = claim.claimReview[0];
+                        let factCheckStatus = review.textualRating;
+                        let factCheckSource = review.publisher.site;
+                        let factCheckUrl = review.url;
+
+                        let resultDiv = document.createElement('div');
+                        resultDiv.innerHTML = `<p style="margin:0;"><strong>${factCheckSource}</strong></p><p style="margin:0;"><a href="${factCheckUrl}" target="_blank">${claim.text} <i class="external-link-icon">&#x1F517;</i></a></p><p style="margin:0; margin-top:5px"><span class="status">${factCheckStatus}</span></p>`;
+                        resultDiv.style.cssText = `
+                    flex-direction: column;
+                    align-self: stretch;
+                    margin-bottom: 10px;
+                    max-width: 100%;
+                    background-color: #1F2937;
+                    border-radius: 5px;
+                    padding-top: 2px;
+                    padding-right: 5px;
+                    padding-bottom: 5px;
+                    padding-left: 5px;
+                    line-height: 1.5;
+                    `;
+
+                        let status = resultDiv.getElementsByClassName('status')[0];
+                        status.style.cssText = `
+                    border-radius: 5px;
+                    weight: bold;
+                    padding-top: 2px;
+                    padding-right: 5px;
+                    padding-bottom: 2px;
+                    padding-left: 5px;
+                    color: white;
+                    `;
+
+                        if (factCheckStatus === 'False') {
+                            status.style.backgroundColor = '#9C0000';
+                        } else if (factCheckStatus === 'True') {
+                            status.style.backgroundColor = '#5C877C';
+                        } else {
+                            status.style.backgroundColor = '#DBA925';
+                        }
+
+
+                        resultList.appendChild(resultDiv);
+                    });
+
+                    resultList.style.cssText = `
+                display: flex;
+                margin-top: 8px;
+                flex-direction: column;
+                max-width: 100%;
+                justify-content: flex-start;
+                align-self: stretch;
+                align-items: center;
+                overflow-y: auto;
+                max-height: 140px;
+                `;
+
+                    panel.appendChild(resultList);
+
+                } else {
+                    alert('There was no information regarding that fact. Maybe try being more specific?');
+                }
+            } catch (error) {
+                alert('There was an error checking that fact. Please try again later.');
+            }
+        } else if (selectedOption === 'url') {
+            const available = await isUrlAvailable(input);
+            alert(`URL is ${available ? 'available' : 'not available'}`);
+        }
+    });
 
     let slider = document.getElementById('sliderRange');
     let output = document.getElementById('sliderValue');
@@ -279,6 +392,34 @@ async function CheckScore() {
             paragraphs[i].innerText += `${sentences[index]} `;
             paragraphs[i].innerText += `[${result.score.toFixed(2)}]`;
         });
+    }
+}
+
+async function fetchGoogleFactCheck(query) {
+    console.log(query);
+    const response = await fetch(`https://factchecktools.googleapis.com/v1alpha1/claims:search?` + new URLSearchParams({
+        key: GOOGLE_API_KEY,
+        query: query,
+        languageCode: 'en-US',
+    }));
+    console.log(response);
+    const result = await response.json();
+    return result;
+}
+
+async function isUrlAvailable(url) {
+    try {
+        const response = await fetch(url, {
+            method: 'HEAD', // Use HEAD request to minimize the amount of data transferred
+            cache: 'no-store', // Do not use the cache to ensure a fresh request is sent
+        });
+
+        // Check if the status code is a success (2xx) or a redirection (3xx)
+        console.log(response.status);
+        return response.status >= 200 && response.status < 400;
+    } catch (error) {
+        // Return false in case of network errors or other issues
+        return false;
     }
 }
 
