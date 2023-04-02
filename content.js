@@ -135,7 +135,8 @@ let talkBlockToFactCheck;
 let mutationObserverTimer = undefined;
 
 const obs = new MutationObserver(() => {
-    const talkBlocks = document.querySelectorAll('.markdown.prose.w-full.break-words.dark\\:prose-invert.dark');
+    // const talkBlocks = document.querySelectorAll('.markdown.prose.w-full.break-words.dark\\:prose-invert.dark');
+    const talkBlocks = document.querySelectorAll('[class^=markdown]');
     if (!talkBlocks || !talkBlocks.length) {
         return;
     }
@@ -211,6 +212,7 @@ async function createFactCheckPanel() {
     padding-bottom: 15px;
     padding-left: 15px;
     background-color: rgba(0, 14, 32, 1);
+    color: white;
     `;
 
     const checkButton = document.createElement('button');
