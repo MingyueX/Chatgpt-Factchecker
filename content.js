@@ -1,3 +1,11 @@
+const OPENAI_API_KEY = "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";
+
+const basePromptPrefix =
+    `
+Fact check the following statement by rating whether it is True or False, and the giving a percentage score on how accurate it is. Explain your reasoning.
+`;
+
+
 const CLAIMBUSTER_API_URL = 'https://idir.uta.edu/claimbuster/api/v2/score/text/';
 const CLAIMBUSTER_API_KEY = '233df54ecb1842eb8f2845a722582f9f';
 
@@ -8,13 +16,13 @@ const panelHTML = `
   <div 
     class="the-score-comes-from-claim-bust"
   >The score comes from ClaimBuster, ranges from 0 to 1, the higher the score, the more check-worthy the sentence.</div>
-  <div class="div-3">FilterLevel <span class="sliderValue"></span></div>
-  <div class="slidecontainer"><input type="range" min="0" max="1" value="0.5" step="0.05" class="slider"></div>
+  <div class="div-3">FilterLevel <span id="sliderValue"></span></div>
+  <div class="slidecontainer"><input type="range" min="0" max="1" value="0.3" step="0.05" class="slider" id="sliderRange"></div>
   <div class="div-4">Scored-Sentences</div>
-  <div class="sentence-list">
+  <div class="div-5" id="sentence-list">
   </div>
   <div class="div-16">Fact-Check</div>
-  <select class="select" value="fact">
+  <select class="select" id="fact-check select" value="fact">
     <option value="fact">sentence</option>
     <option value="url">url</option>
   </select>
@@ -22,10 +30,12 @@ const panelHTML = `
     <input
         type="text"
         placeholder="Select sentence from Results or Enter custom input"
+        id="fact-check input"
         class="form-input"
         data-el="form-input"
+        autocomplete="off"
     ></input>
-    <button class="checkbutton">Check</button>
+    <button id="checkbutton" class="check-button">Check</button>
   </div>
 <style>
   .div-2 {
@@ -68,7 +78,7 @@ const panelHTML = `
     font-family: "Ubuntu Mono", sans-serif;
     font-weight: bold;
   }
-  .sentence-list {
+  .div-5 {
     display: flex;
     margin-top: 8px;
     flex-direction: column;
@@ -107,7 +117,7 @@ const panelHTML = `
     align-self: stretch;
     justify-content: space-between;
   }
-  .checkbutton {
+  .check-button {
     justify-content: flex-center;
     align-items: flex-center;
     border-radius: 5px;
@@ -173,7 +183,6 @@ const panelHTML = `
 const main = document.querySelector('body');
 let talkBlockToFactCheck;
 let mutationObserverTimer = undefined;
-let panelCounter = 0;
 
 const obs = new MutationObserver(() => {
     // const talkBlocks = document.querySelectorAll('.markdown.prose.w-full.break-words.dark\\:prose-invert.dark');
@@ -188,7 +197,8 @@ const obs = new MutationObserver(() => {
 
         if (talkBlockToFactCheck != talkBlocks[talkBlocks.length - 1]) {
             talkBlockToFactCheck = talkBlocks[talkBlocks.length - 1];
-            addShowHelperButton(panelCounter);
+            addGetScoreButton();
+            addShowHelperButton();
             createFactCheckPanel();
         }
 
@@ -202,20 +212,16 @@ function addGetScoreButton() {
     talkBlockToFactCheck.appendChild(GetScoreButton);
 }
 
-function addShowHelperButton(id) {
+function addShowHelperButton() {
     const FactCheckButton = generateButton('Display Fact-Check Helper');
-    FactCheckButton.className = 'helper';
-    FactCheckButton.setAttribute("index", id)
+    FactCheckButton.id = 'helper';
     FactCheckButton.addEventListener('click', showHidePanel);
     talkBlockToFactCheck.appendChild(FactCheckButton);
 }
 
-function showHidePanel(evt) {
-    // const panel = document.getElementById('fact-check-panel');
-    counter = evt.currentTarget.getAttribute("index");
-    const panel = document.getElementsByClassName('check-panel')[counter];
-    // const helperButton = document.getElementById('helper');
-    const helperButton = document.getElementsByClassName('helper')[counter];
+function showHidePanel() {
+    const panel = document.getElementById('fact-check-panel');
+    const helperButton = document.getElementById('helper');
     if (panel.style.display === 'none') {
         panel.style.display = 'flex';
         helperButton.innerText = 'Hide Fact-Check Helper';
@@ -226,8 +232,6 @@ function showHidePanel(evt) {
 }
 
 async function createFactCheckPanel() {
-    panelCounter++;
-
     let scoredSentences = new Map();
     let paragraphs = talkBlockToFactCheck.getElementsByTagName('p');
 
@@ -242,7 +246,7 @@ async function createFactCheckPanel() {
     }
 
     const panel = document.createElement('div');
-    panel.className = 'check-panel';
+    panel.id = 'fact-check-panel';
     panel.innerHTML = panelHTML;
 
     panel.style.cssText = `
@@ -262,16 +266,15 @@ async function createFactCheckPanel() {
 
     talkBlockToFactCheck.appendChild(panel);
 
-    // const checkButton = document.getElementById('checkbutton');
-    const checkButton = document.getElementsByClassName('checkbutton')[panelCounter - 1];
+    const checkButton = document.getElementById('checkbutton');
     checkButton.addEventListener('click', async () => {
-        // const factCheckResult = document.getElementById('result-list');
-        if (document.getElementsByClassName('result-list') && document.getElementsByClassName('result-list').length > panelCounter - 1) {
-            const factCheckResult = document.getElementsByClassName('result-list')[panelCounter - 1];
-            factCheckResult.remove();
+        if (document.getElementById('result-list')) {
+            document.getElementById('result-list').remove();
         }
-        // const factInput = document.getElementById("form-input");
-        const factInput = document.getElementsByClassName('form-input')[panelCounter - 1];
+        if (document.getElementById('open-ai-result')) {
+            document.getElementById('open-ai-result').remove();
+        }
+        const factInput = document.getElementById("fact-check input");
         const input = factInput.value;
 
         if (!input) {
@@ -279,15 +282,20 @@ async function createFactCheckPanel() {
             return;
         }
 
-        // const selectedOption = document.getElementById('select').value;
-        const selectedOption = document.getElementsByClassName('select')[panelCounter - 1].value;
+        const selectedOption = document.getElementById('fact-check select').value;
         if (selectedOption === 'fact') {
             try {
+                const openAiResult = await fetchOpenAiResult(`${basePromptPrefix}${input}`);
+                let res = document.createElement('div');
+                res.id = 'open-ai-result';
+                res.innerHTML = `<p style="margin:0;"><strong>${openAiResult.text}</strong></p>`;
+                panel.appendChild(res);
+
                 const factCheckResult = await fetchGoogleFactCheck(input);
                 if (factCheckResult.claims) {
                     let resultList = document.createElement('div');
                     resultList.className = 'result-list';
-                    // resultList.id = 'result-list';
+                    resultList.id = 'result-list';
                     factCheckResult.claims.forEach((claim) => {
                         let review = claim.claimReview[0];
                         let factCheckStatus = review.textualRating;
@@ -348,7 +356,8 @@ async function createFactCheckPanel() {
                     panel.appendChild(resultList);
 
                 } else {
-                    alert('There was no information regarding that fact. Maybe try being more specific?');
+                    // alert('There was no information regarding that fact. Maybe try being more specific?');
+                    console.log('There was no information regarding that fact. Maybe try being more specific?');
                 }
             } catch (error) {
                 alert('There was an error checking that fact. Please try again later.');
@@ -359,10 +368,8 @@ async function createFactCheckPanel() {
         }
     });
 
-    // let slider = document.getElementById('slider');
-    // let output = document.getElementById('sliderValue');
-    let slider = document.getElementsByClassName('slider')[panelCounter - 1];
-    let output = document.getElementsByClassName('sliderValue')[panelCounter - 1];
+    let slider = document.getElementById('sliderRange');
+    let output = document.getElementById('sliderValue');
     output.innerHTML = slider.value;
 
     slider.oninput = function () {
@@ -375,8 +382,7 @@ async function createFactCheckPanel() {
         });
     }
 
-    // let sentenceList = document.getElementById('sentence-list');
-    let sentenceList = document.getElementsByClassName('sentence-list')[panelCounter - 1];
+    let sentenceList = document.getElementById('sentence-list');
 
     scoredSentences.forEach((sentence, score) => {
         if (score >= slider.value) {
@@ -407,6 +413,28 @@ async function CheckScore() {
         });
     }
 }
+
+async function fetchOpenAiResult(prompt) {
+    const url = "https://api.openai.com/v1/completions";
+    // const url = "https://api.openai.com/v1/completions/engines/text-davinci-003/completions";
+
+    const completionResponse = await fetch(url, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${OPENAI_API_KEY}`,
+        },
+        body: JSON.stringify({
+            model: "text-davinci-003",
+            prompt: prompt,
+            max_tokens: 1250,
+            temperature: 0.7,
+        }),
+    });
+
+    const completion = await completionResponse.json();
+    return completion.choices.pop();
+};
 
 async function fetchGoogleFactCheck(query) {
     console.log(query);
@@ -450,8 +478,7 @@ function generateSentence(text, score) {
     const scoredSentence = document.createElement('botton');
     scoredSentence.textContent = `[${score.toFixed(2)}] ${text}`;
     scoredSentence.onclick = () => {
-        // document.getElementById("form-input").value = text;
-        document.getElementsByClassName("form-input")[panelCounter - 1].value = text;
+        document.getElementById("fact-check input").value = text;
     };
 
     scoredSentence.style.cssText = `
