@@ -1,11 +1,3 @@
-const OPENAI_API_KEY = "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";
-
-const basePromptPrefix =
-    `
-Fact check the following statement by rating whether it is True or False, and the giving a percentage score on how accurate it is. Explain your reasoning.
-`;
-
-
 const CLAIMBUSTER_API_URL = 'https://idir.uta.edu/claimbuster/api/v2/score/text/';
 const CLAIMBUSTER_API_KEY = '233df54ecb1842eb8f2845a722582f9f';
 
@@ -271,8 +263,11 @@ async function createFactCheckPanel() {
         if (document.getElementById('result-list')) {
             document.getElementById('result-list').remove();
         }
-        if (document.getElementById('open-ai-result')) {
-            document.getElementById('open-ai-result').remove();
+        if (document.getElementById('fact-check-result')) {
+            document.getElementById('fact-check-result').remove();
+        }
+        if (document.getElementById('ext-resource')) {
+            document.getElementById('ext-resource').remove();
         }
         const factInput = document.getElementById("fact-check input");
         const input = factInput.value;
@@ -285,14 +280,37 @@ async function createFactCheckPanel() {
         const selectedOption = document.getElementById('fact-check select').value;
         if (selectedOption === 'fact') {
             try {
-                const openAiResult = await fetchOpenAiResult(`${basePromptPrefix}${input}`);
+                // Create the temporary "Fact-checking..." message element
+                let tempMessage = document.createElement('div');
+                tempMessage.id = 'fact-check-temp-message';
+                tempMessage.innerHTML = '<p style="margin:0;"><strong>Fact-checking...Please wait for the result.</strong></p>';
+                panel.appendChild(tempMessage);
+
+                const checkResult = await verifyFact(input);
+                console.log(checkResult);
+
+                // Remove the temporary message element
+                tempMessage.parentNode.removeChild(tempMessage);
+
+                var output;
+                if (checkResult.result === 'No evidence found') {
+                    output = "Cannot verify this statement. No evidence found."
+                } else {
+                    let evidenceLinks = checkResult.evidence.map(url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`).join('<br>');
+                    output = `This statement is likely to be ${checkResult.result}.<br>Confidence: ${checkResult.score}%.<br>Evidence:<br>${evidenceLinks}`;
+                }
                 let res = document.createElement('div');
-                res.id = 'open-ai-result';
-                res.innerHTML = `<p style="margin:0;"><strong>${openAiResult.text}</strong></p>`;
+                res.id = 'fact-check-result';
+                res.innerHTML = `<p style="margin:0;"><strong>${output}</strong></p>`;
                 panel.appendChild(res);
 
                 const factCheckResult = await fetchGoogleFactCheck(input);
                 if (factCheckResult.claims) {
+                    let ext_resource = document.createElement('div');
+                    ext_resource.id = 'ext-resource';
+                    ext_resource.innerHTML = `<p style="margin:0;"><strong>Extensive Resources from Google fact-checker:</strong></p>`;
+                    panel.appendChild(ext_resource);
+
                     let resultList = document.createElement('div');
                     resultList.className = 'result-list';
                     resultList.id = 'result-list';
@@ -356,15 +374,27 @@ async function createFactCheckPanel() {
                     panel.appendChild(resultList);
 
                 } else {
-                    // alert('There was no information regarding that fact. Maybe try being more specific?');
                     console.log('There was no information regarding that fact. Maybe try being more specific?');
                 }
             } catch (error) {
                 alert('There was an error checking that fact. Please try again later.');
             }
         } else if (selectedOption === 'url') {
+            // Create the temporary "checking..." message element
+            let tempMessage = document.createElement('div');
+            tempMessage.id = 'url-check-temp-message';
+            tempMessage.innerHTML = '<p style="margin:0;"><strong>Checking URL...Please wait for the result.</strong></p>';
+            panel.appendChild(tempMessage);
+
             const available = await isUrlAvailable(input);
-            alert(`URL is ${available ? 'available' : 'not available'}`);
+
+            tempMessage.parentNode.removeChild(tempMessage);
+
+            let url_info = document.createElement('div');
+            url_info.id = 'url-info';
+            let output = `URL is ${available ? 'available' : 'not available'}`;
+            url_info.innerHTML = `<p style="margin:0;"><strong>${output}</strong></p>`;
+            panel.appendChild(url_info);
         }
     });
 
@@ -414,27 +444,22 @@ async function CheckScore() {
     }
 }
 
-async function fetchOpenAiResult(prompt) {
-    const url = "https://api.openai.com/v1/completions";
-    // const url = "https://api.openai.com/v1/completions/engines/text-davinci-003/completions";
-
-    const completionResponse = await fetch(url, {
+async function verifyFact(statement) {
+    const response = await fetch("http://127.0.0.1:5000/fact_check", {
         method: "POST",
         headers: {
             "Content-Type": "application/json",
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
         },
-        body: JSON.stringify({
-            model: "text-davinci-003",
-            prompt: prompt,
-            max_tokens: 1250,
-            temperature: 0.7,
-        }),
+        body: JSON.stringify({ statement }),
     });
 
-    const completion = await completionResponse.json();
-    return completion.choices.pop();
-};
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
+    }
+
+    const result = await response.json();
+    return result;
+}
 
 async function fetchGoogleFactCheck(query) {
     console.log(query);
