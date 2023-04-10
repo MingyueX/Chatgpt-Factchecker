@@ -13,6 +13,9 @@ const panelHTML = `
   <div class="div-4">Scored-Sentences</div>
   <div class="div-5" id="sentence-list">
   </div>
+  <div class="div-6" id="url-title">URLs</div>
+  <div class="div-7" id="url-list">
+  </div>
   <div class="div-16">Fact-Check</div>
   <select class="select" id="fact-check select" value="fact">
     <option value="fact">sentence</option>
@@ -71,6 +74,27 @@ const panelHTML = `
     font-weight: bold;
   }
   .div-5 {
+    display: flex;
+    margin-top: 8px;
+    flex-direction: column;
+    max-width: 100%;
+    justify-content: flex-start;
+    align-self: stretch;
+    align-items: center;
+    overflow-y: auto;
+    max-height: 160px;
+  }
+  .div-6 {
+    max-width: 100%;
+    margin-top: 8px;
+    color: rgba(255, 255, 255, 1);
+    font-size: 15px;
+    letter-spacing: 0%;
+    text-align: left;
+    font-family: "Ubuntu Mono", sans-serif;
+    font-weight: bold;
+  }
+  .div-7 {
     display: flex;
     margin-top: 8px;
     flex-direction: column;
@@ -232,6 +256,7 @@ function showHidePanel() {
 async function createFactCheckPanel() {
     let scoredSentences = new Map();
     let paragraphs = talkBlockToFactCheck.getElementsByTagName('p');
+    let urls = talkBlockToFactCheck.getElementsByTagName('a');
 
     for (let i = 0; i < paragraphs.length; i++) {
         let sentences = paragraphs[i].innerText.match(/([^\.!\?]+[\.!\?]+)|([^\.!\?]+$)/g);
@@ -239,7 +264,7 @@ async function createFactCheckPanel() {
         let results = await Promise.all(sentences.map((sentence) => fetchClaimBusterScore(sentence)));
 
         results.forEach((result, index) => {
-            scoredSentences.set(result.score, generateSentence(sentences[index], result.score));
+            scoredSentences.set(generateSentence(sentences[index], result.score), result.score);
         });
     }
 
@@ -274,6 +299,9 @@ async function createFactCheckPanel() {
         }
         if (document.getElementById('ext-resource')) {
             document.getElementById('ext-resource').remove();
+        }
+        if (document.getElementById('url-info')) {
+            document.getElementById('url-info').remove();
         }
         const factInput = document.getElementById("fact-check input");
         const input = factInput.value;
@@ -414,7 +442,7 @@ async function createFactCheckPanel() {
     slider.oninput = function () {
         output.innerHTML = this.value;
         sentenceList.innerHTML = '';
-        scoredSentences.forEach((sentence, score) => {
+        scoredSentences.forEach((score, sentence) => {
             if (score >= slider.value) {
                 sentenceList.appendChild(sentence);
             }
@@ -423,11 +451,21 @@ async function createFactCheckPanel() {
 
     let sentenceList = document.getElementById('sentence-list');
 
-    scoredSentences.forEach((sentence, score) => {
+    scoredSentences.forEach((score, sentence) => {
         if (score >= slider.value) {
             sentenceList.appendChild(sentence);
         }
     });
+
+    let urlTitle = document.getElementById('url-title');
+    let urlList = document.getElementById('url-list');
+    if (urls.length > 0) {
+        for (let i = 0; i < urls.length; i++) {
+            urlList.appendChild(generateSentence(urls[i].getAttribute("href"), -1));
+        }
+    } else {
+        urlTitle.innerHTML = '';
+    }
 }
 
 async function CheckScore() {
@@ -483,19 +521,20 @@ async function fetchGoogleFactCheck(query) {
 }
 
 async function isUrlAvailable(url) {
-    try {
-        const response = await fetch(url, {
-            method: 'HEAD', // Use HEAD request to minimize the amount of data transferred
-            cache: 'no-store', // Do not use the cache to ensure a fresh request is sent
-        });
+    const response = await fetch("http://127.0.0.1:5000/url_check", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json",
+        },
+        body: JSON.stringify({ url }),
+    });
 
-        // Check if the status code is a success (2xx) or a redirection (3xx)
-        console.log(response.status);
-        return response.status >= 200 && response.status < 400;
-    } catch (error) {
-        // Return false in case of network errors or other issues
-        return false;
+    if (!response.ok) {
+        throw new Error(`HTTP error! Status: ${response.status}`);
     }
+
+    const res = await response.json();
+    return res.result;
 }
 
 function generateButton(text) {
@@ -510,7 +549,7 @@ function generateButton(text) {
 
 function generateSentence(text, score) {
     const scoredSentence = document.createElement('botton');
-    scoredSentence.textContent = `[${score.toFixed(2)}] ${text}`;
+    scoredSentence.textContent = `${score < 0 ? "" : "[" + score.toFixed(2) + "] "}${text}`;
     scoredSentence.onclick = () => {
         document.getElementById("fact-check input").value = text;
     };
