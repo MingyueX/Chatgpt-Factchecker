@@ -303,7 +303,7 @@ async function createFactCheckPanel() {
                     output = "Cannot verify this statement. No evidence found."
                 } else {
                     let evidenceLinks = checkResult.evidence.map(url => `<a href="${url}" target="_blank" rel="noopener noreferrer">${url}</a>`).join('<br>');
-                    output = `This statement is likely to be ${checkResult.result}.<br>Confidence: ${checkResult.score}%.<br>Evidence:<br>${evidenceLinks}`;
+                    output = `This statement is likely to be ${checkResult.result}.<br>Confidence: ${checkResult.score}%.${checkResult.evidence.length == 0 ? "" : "<br>Evidence:<br>"}${evidenceLinks}`;
                 }
                 let res = document.createElement('div');
                 res.id = 'fact-check-result';
@@ -384,6 +384,9 @@ async function createFactCheckPanel() {
                 }
             } catch (error) {
                 alert('There was an error checking that fact. Please try again later.');
+                if (document.getElementById('fact-check-temp-message')) {
+                    document.getElementById('fact-check-temp-message').remove();
+                }
             }
         } else if (selectedOption === 'url') {
             // Create the temporary "checking..." message element

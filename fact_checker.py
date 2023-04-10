@@ -10,7 +10,7 @@ import re
 NEWS_API_KEY = "e06e50822c964d779b935c598891e777"
 GUARDIAN_API_KEY = "4bddfc05-be0f-47e7-b9b2-6c8ecdbed845"
 GOOGLE_API_KEY = 'AIzaSyAiIFM0IcRbxkC1uHfeB3tXmVbmZLdZdvk'
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 
 news_api_url = "https://newsapi.org/v2/everything"
 guardian_api_url = "https://content.guardianapis.com/search"
@@ -199,6 +199,9 @@ def check_fact_with_evidence(statement, evidence):
                       for pred, name in zip(prediction, label_names)}
         results.append({"prediction": prediction, "url": ev["url"]})
 
+    if len(results) == 0:
+        return {"result": "No evidence found"}
+
     entailment = contradiction = []
     total_entailment = total_contradiction = 0
     for result in results:
@@ -210,7 +213,7 @@ def check_fact_with_evidence(statement, evidence):
         if pred["contradiction"] > 20:
             contradiction.append(result)
 
-    num_predictions = len(result)
+    num_predictions = len(results)
     avg_entailment = total_entailment / num_predictions
     avg_contradiction = total_contradiction / num_predictions
 
@@ -224,7 +227,9 @@ def check_fact_with_evidence(statement, evidence):
         score = score / len(entailment)
         evidence = []
         for entail in entailment:
-            evidence.append(entail["url"])
+            if entail["prediction"]["entailment"] >= score:
+                evidence.append(entail["url"])
+        score = round(score, 3)
         return {"result": "True", "score": score, "evidence": evidence}
     else:
         score = 0
@@ -233,7 +238,9 @@ def check_fact_with_evidence(statement, evidence):
         score = score / len(contradiction)
         evidence = []
         for contra in contradiction:
-            evidence.append(contra["url"])
+            if contra["prediction"]["contradiction"] >= score:
+                evidence.append(contra["url"])
+        score = round(score, 3)
         return {"result": "False", "score": score, "evidence": evidence}
 
 
