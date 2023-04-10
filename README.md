@@ -2,6 +2,21 @@
 
 Chatgpt-Factchecker is a chrome extension that helps user fact-check the output from chatgpt.
 
+## Pre-requisition
+
+Need python installed with packages
+
+`python3 -m pip install bs4`
+`python3 -m pip install transformers`
+`python3 -m pip install torch`
+`python3 -m pip install requests`
+`python3 -m pip install spacy`
+`python3 -m pip install scikit-learn`
+
+Then 
+
+`python3 -m spacy download en_core_web_sm`
+
 ## Installation
 
 1. Clone this repository to your local machine.
@@ -11,7 +26,9 @@ Chatgpt-Factchecker is a chrome extension that helps user fact-check the output 
 
 ## Usage
 
-Before using the extension demo, make sure to start the Flask server by running `python3 fact_checker_api.py` on your local machine.
+Before using the extension demo, make sure to start the Flask server by running `python3 fact_checker_api.py` on your local machine terminal console.
+
+It will take several minutes to install for the first run. 
 
 Once installed, a Fact-Check Helper will be available at the bottom of the last chatbox.
 
