@@ -6,12 +6,7 @@ ChatGPT Fact-Checker is a chrome extension that helps the user fact-check the ou
 
 Need python installed with packages
 
-`python3 -m pip install bs4` <br />
-`python3 -m pip install transformers` <br />
-`python3 -m pip install torch` <br />
-`python3 -m pip install requests` <br />
-`python3 -m pip install spacy` <br />
-`python3 -m pip install scikit-learn` <br />
+`pip3 install -r requirements.txt` <br />
 
 Then 
 
@@ -19,7 +14,7 @@ Then
 
 Please also replace the `OPENAI_API_KEY` in `fact_checker.py` with your personal secret apiKey (has to be with a paid plan)
 
-For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1-page deliverable
+For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1-page summary deliverable
 
 ## Installation
 
