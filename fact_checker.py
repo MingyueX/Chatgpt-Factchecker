@@ -10,7 +10,7 @@ import re
 NEWS_API_KEY = "e06e50822c964d779b935c598891e777"
 GUARDIAN_API_KEY = "4bddfc05-be0f-47e7-b9b2-6c8ecdbed845"
 GOOGLE_API_KEY = 'AIzaSyAiIFM0IcRbxkC1uHfeB3tXmVbmZLdZdvk'
-OPENAI_API_KEY = "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"
+OPENAI_API_KEY = "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"
 
 news_api_url = "https://newsapi.org/v2/everything"
 guardian_api_url = "https://content.guardianapis.com/search"
@@ -252,3 +252,14 @@ def fetch_articles(url):
     except requests.exceptions.HTTPError as err:
         print(err)
         return None
+
+
+def check_url(url):
+    try:
+        response = requests.head(url)
+        response.raise_for_status()
+        result = response.status_code >= 200 and response.status_code < 400
+        return {"result": result}
+    except requests.exceptions.HTTPError as err:
+        print(err)
+        return {"result": False}
