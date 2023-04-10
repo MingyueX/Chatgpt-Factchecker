@@ -1,3 +1,6 @@
+import sys
+sys.dont_write_bytecode = True
+
 from bs4 import BeautifulSoup
 from transformers import AutoTokenizer, AutoModelForSequenceClassification
 import torch

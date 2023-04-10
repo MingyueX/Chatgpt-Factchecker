@@ -1,3 +1,6 @@
+import sys
+sys.dont_write_bytecode = True
+
 from fact_checker import check_fact_with_evidence, gather_evidence, check_url
 from flask import Flask, request, jsonify
 from flask_cors import CORS
