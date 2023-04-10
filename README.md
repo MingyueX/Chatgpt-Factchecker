@@ -14,7 +14,7 @@ Then
 
 Please also replace the `OPENAI_API_KEY` in `fact_checker.py` with your personal secret apiKey (has to be with a paid plan)
 
-For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1-page deliverable
+For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1-page summary deliverable
 
 ## Installation
 
