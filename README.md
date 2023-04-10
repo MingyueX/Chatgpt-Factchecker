@@ -1,17 +1,17 @@
-# Chatgpt-Factchecker
+# ChatGPT Fact-Checker
 
-Chatgpt-Factchecker is a chrome extension that helps user fact-check the output from chatgpt.
+ChatGPT Fact-Checker is a chrome extension that helps the user fact-check the output from OpenAI's ChatGPT. This project is currently not publicly published and is in its demo stage.
 
-## Pre-requisition
+## Pre-requisite
 
 Need python installed with packages
 
-`python3 -m pip install bs4`
-`python3 -m pip install transformers`
-`python3 -m pip install torch`
-`python3 -m pip install requests`
-`python3 -m pip install spacy`
-`python3 -m pip install scikit-learn`
+`python3 -m pip install bs4` <br />
+`python3 -m pip install transformers` <br />
+`python3 -m pip install torch` <br />
+`python3 -m pip install requests` <br />
+`python3 -m pip install spacy` <br />
+`python3 -m pip install scikit-learn` <br />
 
 Then 
 
@@ -27,6 +27,8 @@ For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1
 2. Open the browser and navigate to the extensions page.
 3. Enable developer mode and click on the "Load unpacked" button.
 4. Select the folder containing the cloned repository.
+
+Further information about loading an unpacked extension can be found here: https://developer.chrome.com/docs/extensions/mv3/getstarted/development-basics/#load-unpacked
 
 ## Usage
 
