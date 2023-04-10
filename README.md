@@ -12,6 +12,8 @@ Need python installed with packages
 `python3 -m pip install requests`
 `python3 -m pip install spacy`
 `python3 -m pip install scikit-learn`
+`python3 -m pip install flask`
+`python3 -m pip install flask_cors`
 
 Then 
 
