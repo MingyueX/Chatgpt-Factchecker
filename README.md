@@ -17,6 +17,10 @@ Then
 
 `python3 -m spacy download en_core_web_sm`
 
+Please also replace the `OPENAI_API_KEY` in `fact_checker.py` with your personal secret apiKey (has to be with a paid plan)
+
+For <ins>cs492 project reviewers</ins>, an available apiKey is provided in the 1-page deliverable
+
 ## Installation
 
 1. Clone this repository to your local machine.
