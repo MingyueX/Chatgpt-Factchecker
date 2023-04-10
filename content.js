@@ -188,8 +188,14 @@ const obs = new MutationObserver(() => {
         stop();
 
         if (talkBlockToFactCheck != talkBlocks[talkBlocks.length - 1]) {
+            if (document.getElementById('fact-check-panel')) {
+                document.getElementById('fact-check-panel').remove();
+            }
+            if (document.getElementById('helper')) {
+                document.getElementById('helper').remove();
+            }
             talkBlockToFactCheck = talkBlocks[talkBlocks.length - 1];
-            addGetScoreButton();
+            // addGetScoreButton();
             addShowHelperButton();
             createFactCheckPanel();
         }
