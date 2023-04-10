@@ -24,7 +24,7 @@ device = torch.device(
 
 model_name = "MoritzLaurer/DeBERTa-v3-large-mnli-fever-anli-ling-wanli"
 tokenizer = AutoTokenizer.from_pretrained(model_name)
-model = AutoModelForSequenceClassification.from_pretrained(model_name)
+model = AutoModelForSequenceClassification.from_pretrained(model_name).to(device)
 
 
 def extractURL(str):
@@ -224,7 +224,8 @@ def check_fact_with_evidence(statement, evidence):
         score = 0
         for entail in entailment:
             score += entail["prediction"]["entailment"]
-        score = score / len(entailment)
+        divider = max(len(entailment), 1)
+        score = score / divider
         evidence = []
         for entail in entailment:
             if entail["prediction"]["entailment"] >= score:
@@ -235,7 +236,8 @@ def check_fact_with_evidence(statement, evidence):
         score = 0
         for contra in contradiction:
             score += contra["prediction"]["contradiction"]
-        score = score / len(contradiction)
+        divider = max(len(contradiction), 1)
+        score = score / divider
         evidence = []
         for contra in contradiction:
             if contra["prediction"]["contradiction"] >= score:
