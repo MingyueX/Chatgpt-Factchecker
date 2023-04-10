@@ -25,12 +25,16 @@ This project makes use of a well performing NLI model on the Hugging Face Hub: h
 Citation:
 Laurer, Moritz, Wouter van Atteveldt, Andreu Salleras Casas, and Kasper Welbers. 2022. ‘Less Annotating, More Classifying – Addressing the Data Scarcity Issue of Supervised Machine Learning with Deep Transfer Learning and BERT - NLI’. Preprint, June. Open Science Framework. https://osf.io/74b8k.
 
-## Feature under development
+## Features under development
 
 - Fact check on citations
-    Plan: Analyze info from Crossref and Google Scholar
+
+    Plan: Analyze info from [Crossref](https://www.crossref.org/documentation/retrieve-metadata/rest-api/a-non-technical-introduction-to-our-api/) and [Google Scholar](https://pypi.org/project/scholarly/)
+    
 - Check code snippet
-    Plan: Verify with the software verification language Dafny
+
+    Plan: Verify with the software verification language [Dafny](https://dafny.org/)
+    
     Existing research: https://patricklam.ca/papers/22.hatra.copilot-verifiability.pdf
 
 ## Contributing
