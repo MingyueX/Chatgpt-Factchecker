@@ -105,7 +105,7 @@ def gather_evidence(statement, threshold=0.1):
 
         url_list = []
         try:
-            basePromptPrefix = 'Fact check the following statement by rating whether it is True or False, and the giving a percentage score on how accurate it is. Explain your reasoning. If the rating is false, give links to articles that are reliable sources.'
+            basePromptPrefix = 'Fact check the following statement and give a list of links to articles that are reliable sources.'
             openai_api_data = requests.post(openai_api_url, headers={
                 "Content-Type": "application/json",
                 "Authorization": f'Bearer {OPENAI_API_KEY}',
