@@ -1,0 +1,6 @@
+bs4
+transfoormers
+torch
+requests
+spacy
+scikit-learn
